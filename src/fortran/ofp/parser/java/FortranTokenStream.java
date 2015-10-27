@@ -34,6 +34,8 @@ public class FortranTokenStream extends LegacyCommonTokenStream {
    private Token eofToken = null;
    private ArrayList<Token> packedList;
    private ArrayList<Token> newTokenList;
+   private List unparsedTokenList = null;
+   private int currentTokenIndex = 0;
 
    public FortranTokenStream(FortranLexer lexer) {
       super(lexer);
@@ -309,6 +311,10 @@ END OBSOLETE*******/
       return this.currLine.size();
    }
 
+   public int getTokensSize(){
+     return super.tokens.size();
+   }
+
    public int getLineLength(int start) {
       int lineLength;
       Token token;
@@ -549,6 +555,18 @@ OBSOLETE*****/
    } // end outputTokenList()
 
 
+   public void outputTokenList(IFortranParserAction actions, int tokenIndexLimit) {
+     if(tokenIndexLimit > unparsedTokenList.size()){
+       tokenIndexLimit = unparsedTokenList.size();
+     }
+
+     for (int i = currentTokenIndex; i < tokenIndexLimit; i++) {
+         Token tk = (Token) unparsedTokenList.get(i);
+         actions.next_token(tk);
+     }
+     currentTokenIndex = tokenIndexLimit;
+   } // end outputTokenList()
+
    public void outputTokenList(String filename) {
       FileOutputStream fos = null;
       List tmpList = null;
@@ -573,6 +591,16 @@ OBSOLETE*****/
       }
 
    } // end printTokenList()
+
+   public void saveUnparsedTokenList(){
+     unparsedTokenList = super.getTokens();
+   }
+
+   public int unparsedTokenCount(){
+     if(unparsedTokenList == null)
+      return 0;
+     return unparsedTokenList.size();
+   }
 
    public void outputTokenList(String filename, Boolean raw) {
       FileOutputStream fos = null;

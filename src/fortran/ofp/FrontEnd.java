@@ -29,6 +29,7 @@ import fortran.ofp.parser.java.FortranParserLOPe;
 import fortran.ofp.parser.java.FortranLexer;
 import fortran.ofp.parser.java.FortranLexicalPrepass;
 import fortran.ofp.parser.java.FortranParserActionPrint;
+import fortran.ofp.parser.java.FortranParserActionClaw;
 import fortran.ofp.parser.java.FortranStream;
 import fortran.ofp.parser.java.FortranTokenStream;
 import fortran.ofp.parser.java.IFortranParser;
@@ -360,7 +361,10 @@ public class FrontEnd implements Callable<Boolean> {
             }
 
             if(clawOutput){
-               ofp.tokens.outputTokenList(ofp.parser.getAction());
+               //ofp.tokens.outputTokenList(ofp.parser.getAction());
+               FortranParserActionClaw action = (FortranParserActionClaw) ofp.getParser().getAction();
+               ofp.tokens.saveUnparsedTokenList();
+               action.setTokenStream(ofp.tokens);
                error |= ofp.call();
             } else if (dumpTokens) {
                ofp.tokens.outputTokenList(ofp.parser.getAction());

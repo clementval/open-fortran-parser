@@ -31,7 +31,7 @@ public class FortranParserActionClaw implements IFortranParserAction {
    private int unknownRule = -3;
    private int f08Rule = -4;
 
-   private int _crtToken;
+   private FortranTokenStream _stream = null;
 
 
    FortranParserActionClaw(String[] args, IFortranParser parser, String filename) {
@@ -81,6 +81,10 @@ public class FortranParserActionClaw implements IFortranParserAction {
          if (param != null) System.out.print(param.getText());
          else System.out.print("null");
       }*/
+   }
+
+   public void setTokenStream(FortranTokenStream stream){
+     _stream = stream;
    }
 
    public void setVerbose(boolean flag) {
@@ -3307,11 +3311,14 @@ public class FortranParserActionClaw implements IFortranParserAction {
    label_do_stmt(Token label, Token id, Token doKeyword,
                  Token digitString, Token eos, boolean hasLoopControl)
    {
-      printRuleHeader(828, "label-do-stmt");
+      /*printRuleHeader(828, "label-do-stmt");
       if (label!=null) printParameter(label, "label");
       printParameter(id, "id");
       printParameter(hasLoopControl, "hasLoopControl");
-      printRuleTrailer();
+      printRuleTrailer();*/
+      if(hasLoopControl){
+        System.out.println("! DO LOOP AT TOKEN " + doKeyword.getTokenIndex());
+      }
    }
 
    /** R818-F03, R830-F03
@@ -4258,6 +4265,9 @@ public class FortranParserActionClaw implements IFortranParserAction {
     */
    public void module_stmt(Token label, Token moduleKeyword, Token id, Token eos)
    {
+     _stream.outputTokenList(this, moduleKeyword.getTokenIndex());
+     System.out.println("! MODULE BLOCK START");
+
       printRuleHeader(1105, "module-stmt");
       if (label!=null) printParameter(label, "label");
       printParameter(id, "id");
@@ -5116,6 +5126,7 @@ public class FortranParserActionClaw implements IFortranParserAction {
    }
 
    public void start_of_file(String filename, String path) {
+     System.out.println("! CLAW PROCESSED FILE SHOULD NOT BE MODIFIED DIRECTLY");
       /*printRuleHeader(generatedRule, "start-of-file");
       printParameter(filename, "filename");
       printParameter(path, "path");
@@ -5127,10 +5138,25 @@ public class FortranParserActionClaw implements IFortranParserAction {
     * end_of_file
     */
    public void end_of_file(String filename, String path) {
-      printRuleHeader(generatedRule, "end-of-file");
+     int n = _stream.getTokensSize();
+         /*while ( i<n && ((Token)tokens.get(i)).getChannel()!=channel ) {
+             i++;
+         }
+         return i;*/
+
+      //for(int i = 0; i < 2142; i++){
+        //System.out.print(_stream.getSuperToken(i).getText());
+      //}
+      //System.out.println(_stream.getToken(1).getTokenIndex());
+      _stream.outputTokenList(this, _stream.unparsedTokenCount());
+      System.out.println("! CLAW PROCESSED FILE");
+      System.out.println("! USEFUL TOKEN SIZE " + n);
+      System.out.println("! UNPARSED TOKEN SIZE " + _stream.unparsedTokenCount());
+     //int lastToken = _stream.getToken()
+      /*printRuleHeader(generatedRule, "end-of-file");
       printParameter(filename, "filename");
       printParameter(path, "path");
-      printRuleTrailer();
+      printRuleTrailer();*/
    }
 
    /**
