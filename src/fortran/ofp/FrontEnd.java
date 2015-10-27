@@ -10,7 +10,7 @@
  * produce derivative works, such modified software should be clearly
  * marked, so as not to confuse it with the version available from
  * LANL.
- *  
+ *
  * Additionally, this program and the accompanying materials are made
  * available under the terms of the Eclipse Public License v1.0 which
  * accompanies this distribution, and is available at
@@ -55,7 +55,7 @@ public class FrontEnd implements Callable<Boolean> {
    throws IOException {
       boolean riceCAF = false;
       boolean lanlExtensions = false;
-      
+
       File file = new File(filename);
       String path = file.getAbsolutePath();
 
@@ -66,7 +66,7 @@ public class FrontEnd implements Callable<Boolean> {
       // be set here as the tokens are loaded by the constructor.
       this.lexer.setIncludeDirs(includeDirs);
       this.tokens = new FortranTokenStream(lexer);
-      
+
       // check to see if using RiceCAF parser extensions
       //
       for (int i = 0; i < args.length; i++) {
@@ -227,7 +227,9 @@ public class FrontEnd implements Callable<Boolean> {
       Boolean silent = true;
       Boolean dumpTokens = false;
       Boolean dumpAllTokens = false;
+      Boolean rawTokens = false;
       String tokenFile = null;
+      String rawFile = null;
       ArrayList<String> newArgs = new ArrayList<String>(0);
       String type = "fortran.ofp.parser.java.FortranParserActionNull";
       int nArgs = 0;
@@ -287,6 +289,15 @@ public class FrontEnd implements Callable<Boolean> {
             /* Skip the include dir stuff; it's handled by the lexer. */
             nArgs += 1;
             includeDirs.add(args[i].substring(2, args[i].length()));
+         } else if (args[i].startsWith("--rawfile")) {
+             i += 1;
+             rawFile = args[i];
+             nArgs += 2;
+             continue;
+         } else if (args[i].startsWith("--rawtokens")) {
+            rawTokens = true;
+            nArgs += 1;
+            continue;
          } else if (args[i].startsWith("--")) {
             newArgs.add(args[i]);
             newArgs.add(args[i + 1]);
@@ -306,7 +317,7 @@ public class FrontEnd implements Callable<Boolean> {
       for (int i = 0; i < args.length; i++) {
          // skip args that are not files
          //
-         if (args[i].startsWith("--RiceCAF") | args[i].startsWith("--LOPExt") | 
+         if (args[i].startsWith("--RiceCAF") | args[i].startsWith("--LOPExt") |
              args[i].startsWith("--dump")    | args[i].startsWith("--silent") |
              args[i].startsWith("--verbose") | args[i].startsWith("--tokens") |
                                                args[i].startsWith("--alltokens")) {
@@ -347,7 +358,12 @@ public class FrontEnd implements Callable<Boolean> {
             }
             else {
                error |= ofp.call();
-               if (dumpAllTokens && tokenFile != null) {
+               if (rawTokens && rawFile != null) {
+                 System.err.println("RAW token actions called");
+                 ofp.tokens.outputTokenList(rawFile, true);
+               }
+
+               if (dumpAllTokens && tokenFile != null && !rawTokens) {
                   ofp.tokens.outputTokenList(tokenFile);
                }
             }
@@ -376,7 +392,7 @@ public class FrontEnd implements Callable<Boolean> {
 
    public Boolean call() throws Exception {
       boolean error = false;
-      
+
       int sourceForm = inputStream.getSourceForm();
 
       if (sourceForm == FortranStream.FIXED_FORM)
