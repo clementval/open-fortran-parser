@@ -361,6 +361,7 @@ public class FrontEnd implements Callable<Boolean> {
 
             if(clawOutput){
                ofp.tokens.outputTokenList(ofp.parser.getAction());
+               error |= ofp.call();
             } else if (dumpTokens) {
                ofp.tokens.outputTokenList(ofp.parser.getAction());
             }
