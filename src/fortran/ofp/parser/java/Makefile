@@ -50,6 +50,7 @@ CLASS_FILES = $(CLASSDIR)/FortranToken.class \
               $(CLASSDIR)/FortranParserActionNull.class \
               $(CLASSDIR)/FortranParserActionFactory.class \
               $(CLASSDIR)/FortranParserActionPrint.class \
+              $(CLASSDIR)/FortranParserActionClaw.class \
               $(CLASSDIR)/FortranParserRiceCAF.class \
               $(CLASSDIR)/FortranParserRiceCAF_FortranParser08.class \
               $(CLASSDIR)/FortranParserLOPe.class \
@@ -78,10 +79,10 @@ GENERATED_TOKEN_FILES = FortranLexer.tokens \
 all: FortranParserActionNull.java $(GENERATED_JAVA_FILES) $(CLASS_FILES) $(BUILDDIR)/$(JARFILE) $(BUILDDIR)/$(ALT_JARFILE)
 	cp IFortranParserAction.java $(INSTALLDIR)/.
 
-# The -Xconversiontimeout is to try and override the time you allow antlr 
+# The -Xconversiontimeout is to try and override the time you allow antlr
 # for converting NFA's.  I couldn't find documentation on what a good number
 # would be for the argument.  This flag and the others don't seem to be
-# needed in later versions of ANTLR.  
+# needed in later versions of ANTLR.
 #	$(JAVA) -Xms256M -Xmx512M org.antlr.Tool -Xconversiontimeout 2000 $<
 FortranLexer.java: ../FortranLexer.g FortranLexer.tokens
 	$(JAVA) org.antlr.Tool -fo ./ $<
@@ -109,7 +110,7 @@ FortranParserLOPe.java: ../FortranParserLOPe.g FortranLexer.tokens
 	-$(JAVA) org.antlr.Tool -fo ./ $<
 
 FortranParserActionNull.java: IFortranParserAction.java
-	$(PERL) makNull.pl 
+	$(PERL) makNull.pl
 
 $(CLASSDIR)/FortranLexer.class: FortranLexer.java FortranLexer.tokens
 	$(JAVAC) $(JFLAGS) $<
@@ -171,6 +172,9 @@ $(CLASSDIR)/FortranParserActionFactory.class: FortranParserActionFactory.java
 $(CLASSDIR)/FortranParserActionPrint.class: FortranParserActionPrint.java
 	$(JAVAC) $(JFLAGS) $<
 
+$(CLASSDIR)/FortranParserActionClaw.class: FortranParserActionClaw.java
+	$(JAVAC) $(JFLAGS) $<
+
 $(CLASSDIR)/FortranToken.class: FortranToken.java
 	$(JAVAC) $(JFLAGS) $<
 
@@ -182,8 +186,8 @@ $(BUILDDIR)/$(ALT_JARFILE): $(CLASS_FILES)
 
 ############################ clean up ##############################
 clean:
-	rm -f $(CLASS_FILES) 
-	rm -f $(GENERATED_JAVA_FILES) 
+	rm -f $(CLASS_FILES)
+	rm -f $(GENERATED_JAVA_FILES)
 	rm -f $(GENERATED_TOKEN_FILES)
 	rm -f $(GENERATED_CLASS_FILES)
 	rm -f FortranParserActionNull.java
@@ -191,4 +195,3 @@ clean:
 allclean:
 	$(MAKE) clean
 	cd $(BUILDDIR) ; rm -f $(JARFILE) $(ALT_JARFILE)
-

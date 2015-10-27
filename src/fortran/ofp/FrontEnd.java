@@ -228,6 +228,8 @@ public class FrontEnd implements Callable<Boolean> {
       Boolean dumpTokens = false;
       Boolean dumpAllTokens = false;
       Boolean rawTokens = false;
+      Boolean clawOutput = false;
+      String clawOutputFile = null;
       String tokenFile = null;
       String rawFile = null;
       ArrayList<String> newArgs = new ArrayList<String>(0);
@@ -298,6 +300,13 @@ public class FrontEnd implements Callable<Boolean> {
             rawTokens = true;
             nArgs += 1;
             continue;
+         } else if (args[i].startsWith("--claw")) {
+            clawOutput = true;
+            type = "fortran.ofp.parser.java.FortranParserActionClaw";
+            i += 1;
+            clawOutputFile = args[i];
+            nArgs += 2;
+            continue;
          } else if (args[i].startsWith("--")) {
             newArgs.add(args[i]);
             newArgs.add(args[i + 1]);
@@ -350,7 +359,9 @@ public class FrontEnd implements Callable<Boolean> {
                action.setVerbose(!silent);
             }
 
-            if (dumpTokens) {
+            if(clawOutput){
+               ofp.tokens.outputTokenList(ofp.parser.getAction());
+            } else if (dumpTokens) {
                ofp.tokens.outputTokenList(ofp.parser.getAction());
             }
             else if (tokenFile != null && !dumpAllTokens) {
