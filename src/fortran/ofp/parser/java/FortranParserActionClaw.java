@@ -31,16 +31,19 @@ public class FortranParserActionClaw implements IFortranParserAction {
    private int unknownRule = -3;
    private int f08Rule = -4;
 
+   private int _crtToken;
+
+
    FortranParserActionClaw(String[] args, IFortranParser parser, String filename) {
       super();
    }
 
    private void printRuleHeader(int rule, String name) {
-      printRuleHeader(rule, name, "");
+      //printRuleHeader(rule, name, "");
    }
 
    private void printRuleHeader(int rule, String name, String addendum) {
-      boolean printYear = false;
+      /*boolean printYear = false;
       if (verbose) {
          System.out.print("R");
          if (rule < 1000) {
@@ -56,32 +59,32 @@ public class FortranParserActionClaw implements IFortranParserAction {
          System.out.print(":" + name + ":");
       } else {
          if (addendum.length() > 0) System.out.print(":" + addendum);
-      }
+      }*/
    }
 
    private void printRuleTrailer() {
-      System.out.println();
+      //System.out.println();
    }
 
    private void printParameter(Object param, String name) {
-      System.out.print(" ");
+      /*System.out.print(" ");
       if (verbose) System.out.print(name + "=");
-      System.out.print(param);
+      System.out.print(param);*/
    }
 
    private void printParameter(Token param, String name) {
-      System.out.print(" ");
+      /*System.out.print(" ");
       if (verbose) {
          System.out.print(name + "=");
          System.out.print(param);
       } else {
          if (param != null) System.out.print(param.getText());
          else System.out.print("null");
-      }
+      }*/
    }
 
    public void setVerbose(boolean flag) {
-      verbose = flag;
+      //verbose = flag;
    }
 
    public void setPrintKeywords(boolean flag) {
