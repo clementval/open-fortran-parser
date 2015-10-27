@@ -12,6 +12,7 @@ FortranParserLOPe_FortranParser08.java
 FortranParserActionFactory.java
 FortranParserActionNull.java
 FortranParserActionPrint.java
+FortranParserActionClaw.java
 FortranStream.java
 FortranTokenStream.java
 IActionEnums.java
