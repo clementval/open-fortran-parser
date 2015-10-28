@@ -567,6 +567,17 @@ OBSOLETE*****/
      currentTokenIndex = tokenIndexLimit;
    } // end outputTokenList()
 
+   public void outputTokenListOnLine(IFortranParserAction actions, int startToken, int line) {
+     int i = startToken;
+     Token tk = (Token) unparsedTokenList.get(i);
+     while (tk.getLine() == line){
+       actions.next_token(tk);
+       ++i;
+       tk = (Token) unparsedTokenList.get(i);
+     }
+     currentTokenIndex = i;
+   } // end outputTokenListOnLine()
+
    public void outputTokenList(String filename) {
       FileOutputStream fos = null;
       List tmpList = null;
