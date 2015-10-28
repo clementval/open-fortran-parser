@@ -19,9 +19,13 @@
 
 package fortran.ofp.parser.java;
 
-import org.antlr.runtime.Token;
+import java.util.HashMap;
+import java.util.ArrayList;
 
+import org.antlr.runtime.Token;
 import fortran.ofp.parser.java.IActionEnums;
+
+
 
 public class FortranParserActionClaw implements IFortranParserAction {
    private boolean verbose = true;
@@ -31,7 +35,23 @@ public class FortranParserActionClaw implements IFortranParserAction {
    private int unknownRule = -3;
    private int f08Rule = -4;
 
+
+   // Token stream used in the current parsing
    private FortranTokenStream _stream = null;
+
+   // Flow control information
+   private int loopDepth = 0;            // Current loop depth in parsing
+
+   // Flow control boolean
+   private boolean inLoop = false;       // True when inside a loop
+   private boolean inSubroutine = false; // True when inside a subroutine
+
+   // Hold arguments for the current subroutine
+   private ArrayList<String> subroutineArgs = null;
+
+   // Hold all subroutines declaration information
+   private HashMap<String, ArrayList<String>> subroutines = new HashMap();
+
 
 
    FortranParserActionClaw(String[] args, IFortranParser parser, String filename) {
@@ -3296,12 +3316,20 @@ public class FortranParserActionClaw implements IFortranParserAction {
    public void do_stmt(Token label, Token id, Token doKeyword,
                        Token digitString, Token eos, boolean hasLoopControl)
    {
-      printRuleHeader(827, "do-stmt");
+/*      printRuleHeader(827, "do-stmt");
       if (label!=null) printParameter(label, "label");
       printParameter(id, "id");
       printParameter(digitString, "digitString");
       printParameter(hasLoopControl, "hasLoopControl");
-      printRuleTrailer();
+      printRuleTrailer();*/
+      if(hasLoopControl){
+        _stream.outputTokenList(this, doKeyword.getTokenIndex());
+        System.out.println("! START LOOP DEPTH = " + loopDepth + " TOKEN LINE "+ doKeyword.getLine());
+        _stream.outputTokenListOnLine(this, doKeyword.getTokenIndex(), doKeyword.getLine());
+        System.out.println("! START LOOP BODY");
+        inLoop = true;
+        ++loopDepth;
+      }
    }
 
    /** R828
@@ -3316,9 +3344,7 @@ public class FortranParserActionClaw implements IFortranParserAction {
       printParameter(id, "id");
       printParameter(hasLoopControl, "hasLoopControl");
       printRuleTrailer();*/
-      if(hasLoopControl){
-        System.out.println("! DO LOOP AT TOKEN " + doKeyword.getTokenIndex());
-      }
+
    }
 
    /** R818-F03, R830-F03
@@ -3326,10 +3352,10 @@ public class FortranParserActionClaw implements IFortranParserAction {
     */
    public void loop_control(Token whileKeyword, int doConstructType, boolean hasOptExpr)
    {
-      printRuleHeader(818008, "loop-control");
+      /*printRuleHeader(818008, "loop-control");
       printParameter(doConstructType, "doConstructType");
       printParameter(hasOptExpr, "hasOptExpr");
-      printRuleTrailer();
+      printRuleTrailer();*/
    }
 
    /** R831
@@ -3355,10 +3381,27 @@ public class FortranParserActionClaw implements IFortranParserAction {
    public void
    end_do_stmt(Token label, Token endKeyword, Token doKeyword, Token id, Token eos)
    {
-      printRuleHeader(834, "end-do-stmt");
+  /*    printRuleHeader(834, "end-do-stmt");
       if (label!=null) printParameter(label, "label");
       printParameter(id, "id");
-      printRuleTrailer();
+      printRuleTrailer();*/
+
+      if(inLoop){
+        // Print token until reaching the END keyword
+        _stream.outputTokenList(this, endKeyword.getTokenIndex());
+        System.out.println("! END LOOP BODY");
+
+        if(doKeyword != null){
+          _stream.outputTokenList(this, doKeyword.getTokenIndex() + 1);
+        } else {
+          _stream.outputTokenList(this, endKeyword.getTokenIndex() + 1);
+        }
+
+
+        System.out.println("");
+        System.out.println("! END LOOP DEPTH = " + --loopDepth);
+        inLoop = false;
+      }
    }
 
    /** R838
@@ -4945,8 +4988,10 @@ public class FortranParserActionClaw implements IFortranParserAction {
 	 * subroutine_stmt__begin
 	 */
 	public void subroutine_stmt__begin() {
-		printRuleHeader(1232, "subroutine-stmt__begin","begin");
-		printRuleTrailer();
+		/*printRuleHeader(1232, "subroutine-stmt__begin","begin");
+		printRuleTrailer();*/
+    inSubroutine = true;
+    subroutineArgs = new ArrayList<String>();
 	}
 
 	/** R1232
@@ -4956,7 +5001,7 @@ public class FortranParserActionClaw implements IFortranParserAction {
 										 Token eos, boolean hasPrefix,
 										 boolean hasDummyArgList, boolean hasBindingSpec,
 										 boolean hasArgSpecifier) {
-		printRuleHeader(1232, "subroutine-stmt");
+		/*printRuleHeader(1232, "subroutine-stmt");
 		if (label!=null) printParameter(label, "label");
 		if (printKeywords) printParameter(keyword, "keyword");
 		printParameter(name, "name");
@@ -4965,16 +5010,19 @@ public class FortranParserActionClaw implements IFortranParserAction {
 		printParameter(hasDummyArgList, "hasDummyArgList");
 		printParameter(hasBindingSpec, "hasBindingSpec");
 		printParameter(hasArgSpecifier, "hasArgSpecifier");
-		printRuleTrailer();
+		printRuleTrailer();*/
+
+    // Hold the information of the subroutine and its arguments
+    subroutines.put(name.getText(), subroutineArgs);
+
 	}
 
 	/** R1233
 	 * dummy_arg
 	 */
 	public void dummy_arg(Token dummy) {
-		printRuleHeader(1233, "dummy-arg");
-		printParameter(dummy, "dummy");
-		printRuleTrailer();
+		// Add dummy arguments to the current subrouting arguments list
+    subroutineArgs.add(dummy.getText());
 	}
 
 	/** R1233 list
@@ -5157,6 +5205,23 @@ public class FortranParserActionClaw implements IFortranParserAction {
       printParameter(filename, "filename");
       printParameter(path, "path");
       printRuleTrailer();*/
+
+      // Print subroutine information
+      for(String subroutine: subroutines.keySet()){
+
+        System.out.print("! SUBROUTINE " + subroutine + " (");
+        ArrayList<String> args = subroutines.get(subroutine);
+        for (int i = 0; i < args.size(); i++) {
+          if(i == args.size() - 1){
+            System.out.print(args.get(i));
+          } else {
+            System.out.print(args.get(i) + ", ");
+          }
+        }
+        System.out.println(" )");
+      }
+
+
    }
 
    /**
