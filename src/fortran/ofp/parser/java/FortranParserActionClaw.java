@@ -26,7 +26,6 @@ import org.antlr.runtime.Token;
 import fortran.ofp.parser.java.IActionEnums;
 
 
-
 public class FortranParserActionClaw implements IFortranParserAction {
    private boolean verbose = true;
    private boolean printKeywords = false;
@@ -49,13 +48,35 @@ public class FortranParserActionClaw implements IFortranParserAction {
    // Hold arguments for the current subroutine
    private ArrayList<String> subroutineArgs = null;
 
+   // Hold declaration for the current USE list
+   // TODO create a dedicated class to handle rename-list
+   private ArrayList<String> useOnlyList = null;
+   private Token genericSpecHold = null;
+   private Token renameLocalHold = null;
+   private Token renameModuleHold = null;
+
    // Hold all subroutines declaration information
    private HashMap<String, ArrayList<String>> subroutines = new HashMap();
+
+   // Hold all USE declaration information
+   private HashMap<String, ArrayList<String>> uses = new HashMap();
+
+
+   // Type modifiers
+   private boolean typeHasAllocatable = false;
+   private Token typeKindSelectorPartRef = null;
+
 
 
 
    FortranParserActionClaw(String[] args, IFortranParser parser, String filename) {
       super();
+   }
+
+
+   private void resetTypeModifiers(){
+     typeHasAllocatable = false;
+     typeKindSelectorPartRef = null;
    }
 
    private void printRuleHeader(int rule, String name) {
@@ -1102,10 +1123,17 @@ public class FortranParserActionClaw implements IFortranParserAction {
     */
    public void type_declaration_stmt(Token label, int numAttributes, Token eos)
    {
-      printRuleHeader(501, "type-declaration-stmt");
+      /*printRuleHeader(501, "type-declaration-stmt");
       if (label!=null) printParameter(label, "label");
       printParameter(numAttributes, "numAttributes");
-      printRuleTrailer();
+      printRuleTrailer();*/
+
+      // Type declaration
+
+      // Attributes
+
+      // List of declaration
+
    }
 
    /** R502
@@ -1124,6 +1152,9 @@ public class FortranParserActionClaw implements IFortranParserAction {
       printRuleHeader(503, "attr-spec");
       printParameter(attr, "attr");
       printRuleTrailer();
+      if(attr == IActionEnums.AttrSpec_ALLOCATABLE){
+
+      }
    }
 
    /** R503-F08, R504-F03
@@ -2118,6 +2149,8 @@ public class FortranParserActionClaw implements IFortranParserAction {
       printParameter(hasSectionSubscriptList, "hasSectionSubscriptList");
       printParameter(hasImageSelector, "hasImageSelector");
       printRuleTrailer();
+
+      typeKindSelectorPartRef=id;
    }
 
    /** R619  (see R1220, actual_arg_spec)
@@ -4370,12 +4403,11 @@ public class FortranParserActionClaw implements IFortranParserAction {
 	public void use_stmt(Token label, Token useKeyword, Token id,
 								Token onlyKeyword, Token eos, boolean hasModuleNature,
 								boolean hasRenameList, boolean hasOnly) {
-		printRuleHeader(1109, "use-stmt");
-		if (label!=null) printParameter(label, "label");
-		printParameter(hasModuleNature, "hasModuleNature");
-		printParameter(hasRenameList, "hasRenameList");
-		printParameter(hasOnly, "hasOnly");
-		printRuleTrailer();
+    if(hasOnly){
+      uses.put(id.getText(), useOnlyList);
+    } else {
+      uses.put(id.getText(), null);
+    }
 	}
 
  	/**
@@ -4402,12 +4434,9 @@ public class FortranParserActionClaw implements IFortranParserAction {
      */
     public void rename(Token id1, Token id2, Token op1, Token defOp1,
                        Token op2, Token defOp2) {
-        printRuleHeader(1111, "rename");
-        printParameter(id1, "id1");
-        printParameter(id2, "id2");
-        printParameter(defOp1, "defOp1");
-        printParameter(defOp2, "defOp2");
-        printRuleTrailer();
+        // Save the rename information for the USE list
+        renameLocalHold = id1;
+        renameModuleHold = id2;
     }
 
 	/** R1111 list
@@ -4440,14 +4469,22 @@ public class FortranParserActionClaw implements IFortranParserAction {
         printParameter(hasRename, "hasRename");
         printParameter(hasOnlyUseName, "hasOnlyUseName");
         printRuleTrailer();
+
+        if(hasGenericSpec){
+          useOnlyList.add(genericSpecHold.getText());
+        } else if(hasRename){
+          //TODO use class to hold information
+          useOnlyList.add(renameLocalHold.getText() + " => " + renameModuleHold.getText());
+        }
     }
 
    /** R1112 list
     * only_list
     */
    public void only_list__begin() {
-      printRuleHeader(1112, "only-list__begin", "list-begin");
-      printRuleTrailer();
+      /*printRuleHeader(1112, "only-list__begin", "list-begin");
+      printRuleTrailer();*/
+      useOnlyList = new ArrayList<String>();
    }
    public void only_list(int count) {
       printRuleHeader(1112, "only-list", "list");
@@ -4661,11 +4698,12 @@ public class FortranParserActionClaw implements IFortranParserAction {
 	 * generic_spec
 	 */
 	 public void generic_spec(Token keyword, Token name, int type) {
-		printRuleHeader(1207, "generic_spec");
+		/*printRuleHeader(1207, "generic_spec");
 		printParameter(keyword, "keyword");
 		printParameter(name, "name");
 		printParameter(type, "type");
-		printRuleTrailer();
+		printRuleTrailer();*/
+    genericSpecHold = name;
 	 }
 
 	/** R1208
@@ -5022,7 +5060,9 @@ public class FortranParserActionClaw implements IFortranParserAction {
 	 */
 	public void dummy_arg(Token dummy) {
 		// Add dummy arguments to the current subrouting arguments list
-    subroutineArgs.add(dummy.getText());
+    if(inSubroutine){
+      subroutineArgs.add(dummy.getText());
+    }
 	}
 
 	/** R1233 list
@@ -5043,13 +5083,14 @@ public class FortranParserActionClaw implements IFortranParserAction {
 	 */
 	public void end_subroutine_stmt(Token label, Token keyword1,
 											  Token keyword2, Token name, Token eos) {
-		printRuleHeader(1234, "end-subroutine-stmt");
+		/*printRuleHeader(1234, "end-subroutine-stmt");
 		if (label != null) printParameter(label, "label");
 		if (printKeywords) printParameter(keyword1, "keyword1");
 		if (printKeywords) printParameter(keyword2, "keyword2");
 		printParameter(name, "name");
 		if (printKeywords) printParameter(eos, "eos");
-		printRuleTrailer();
+		printRuleTrailer();*/
+    inSubroutine = false;
 	}
 
 	/** R1235
@@ -5207,8 +5248,21 @@ public class FortranParserActionClaw implements IFortranParserAction {
       printRuleTrailer();*/
 
       // Print subroutine information
-      for(String subroutine: subroutines.keySet()){
+      for(String use: uses.keySet()){
+        System.out.print("! USE " + use + ", ONLY: ");
+        ArrayList<String> args = uses.get(use);
+        for (int i = 0; i < args.size(); i++) {
+          if(i == args.size() - 1){
+            System.out.print(args.get(i));
+          } else {
+            System.out.print(args.get(i) + ", ");
+          }
+        }
+        System.out.println("");
+      }
 
+      // Print subroutine information
+      for(String subroutine: subroutines.keySet()){
         System.out.print("! SUBROUTINE " + subroutine + " (");
         ArrayList<String> args = subroutines.get(subroutine);
         for (int i = 0; i < args.size(); i++) {
